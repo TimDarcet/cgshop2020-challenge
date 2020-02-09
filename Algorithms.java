@@ -48,13 +48,13 @@ public class Algorithms {
 		int randidx = ThreadLocalRandom.current().nextInt(0, mesh.halfedges.size());
 		Halfedge<Point_2> he = mesh.halfedges.get(randidx);
 		int i=0;
-		while (i < 2 * mesh.halfedges.size() && (he == null || !checkRemoval(mesh, he))) {
+		while (i < mesh.halfedges.size() && (he == null || !checkRemoval(mesh, he))) {
 			randidx = ThreadLocalRandom.current().nextInt(0, mesh.halfedges.size());
 			he = mesh.halfedges.get(randidx);
 			System.out.println("Invalid, retrying...");
 			i++;
 		}
-		if (i >= 2 * mesh.halfedges.size()) {
+		if (i >= mesh.halfedges.size()) {
 			he = null;
 			System.out.println("Let's try another way");
 			for (Halfedge<Point_2> htest : mesh.halfedges) {
@@ -138,6 +138,7 @@ public class Algorithms {
 		// set the edges incident to the two extremities of 'e'
 		source.setEdge(previous1);
 		dest.setEdge(previous2);
+		// set the edge incident to the face f1
 		f1.setEdge(next1);
 		
 		// set all references of edges incident to the old face 'f2'

@@ -23,8 +23,7 @@ public class GraphViewer extends PApplet {
 	public Delaunay_2 delaunay=null; // it must be computed: by default this is undefined
 	/** Half-edge representation of the planar graph */
 	public Polyhedron_3<Point_2> graph=null; // it must be converted from the Delaunay triangulation: by default this is undefined
-
-    /** coordinates of the bounding box containing the input points */
+	/** coordinates of the bounding box containing the input points */
     protected double xmin=Double.MAX_VALUE, xmax=Double.MIN_VALUE, ymin=Double.MAX_VALUE, ymax=Double.MIN_VALUE;
 
     // parameters for edge rendering
@@ -65,9 +64,9 @@ public class GraphViewer extends PApplet {
 	   */
 	  public void keyPressed(){
 		  switch(key) {
-		  case('d'):this.delaunay=Algorithms.computeDelaunay(this.pointSet); break;
+		  case('d'):this.delaunay=Algorithms.computeDelaunay(pointSet); break;
 		  case('h'): {
-			  this.graph=IO.polyhedronFromTriangulation(this.pointSet, this.delaunay);
+			  this.graph=IO.polyhedronFromTriangulation(pointSet, this.delaunay);
 			  this.graph.resetMeshIndices();
 			  //System.out.println(Algorithms.toString(this.graph)); // print the halfedges of the mesh
 			  this.delaunay=null; // erase the Delaunay triangulation (not useful anymore)
@@ -82,10 +81,12 @@ public class GraphViewer extends PApplet {
 					n_removed=0;
 				}
 			  }
+			  Algorithms.cleanMesh(this.graph);
 			  break;
 		  }
 		  case('s'):System.out.println(IO.score(this.graph)); break;
 		  case('g'):Algorithms.cleanMesh(this.graph); break;
+		  case('w'):IO.writeEdges(graph); break;
 		  case('-'):this.zoom(1.2); break;
 		  case('+'):this.zoom(0.8); break;
 		  }
@@ -131,6 +132,7 @@ public class GraphViewer extends PApplet {
 		label=label+"press 'h' for converting to the Half-edge representation\n";
 		label=label+"press 'r' for performing edge decimation\n";
 		label=label+"press 's' to display score\n";
+		label=label+"press 'w' to write to file\n";
 		label=label+"use 'left mouse click' to show vertex index\n";
 		label=label+"use 'right mouse button' to drag the layout";
 		
@@ -317,7 +319,26 @@ public class GraphViewer extends PApplet {
 		// uncomment the line below to show a 2D layout of the graph
 		
 		GraphViewer.pointSet=IO.loadPointSet(args[0]);
-		PApplet.main(new String[] { "GraphViewer" }); // launch the Processing viewer
+		GraphViewer gv = new GraphViewer();
+		gv.delaunay=Algorithms.computeDelaunay(pointSet);
+		gv.graph=IO.polyhedronFromTriangulation(pointSet, gv.delaunay);
+		gv.graph.resetMeshIndices();
+		//System.out.println(Algorithms.toString(this.graph)); // print the halfedges of the mesh
+		gv.delaunay=null; // erase the Delaunay triangulation (not useful anymore)
+		while (Algorithms.randomDecimation(gv.graph)) {
+			gv.n_removed++;
+			if (gv.n_removed > gv.graph.vertices.size()/10) {
+				System.out.println("Too manny nulls, cleaning...");
+				Algorithms.cleanMesh(gv.graph);
+				gv.n_removed=0;
+			}
+		}
+		Algorithms.cleanMesh(gv.graph);
+		System.out.println(IO.score(gv.graph));
+		Algorithms.cleanMesh(gv.graph);
+		IO.writeEdges(gv.graph);
+
+		// PApplet.main(new String[] { "GraphViewer" }); // launch the Processing viewer
 	}
 
 

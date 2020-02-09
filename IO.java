@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,36 +8,40 @@ import java.util.Collection;
 import Jcg.geometry.PointCloud_2;
 import Jcg.geometry.Point_2;
 import Jcg.mesh.MeshBuilder;
+import Jcg.polyhedron.Halfedge;
 import Jcg.polyhedron.Polyhedron_3;
 import Jcg.triangulations2D.Delaunay_2;
 import Jcg.triangulations2D.TriangulationDSFace_2;
 import Jcg.triangulations2D.TriangulationDSVertex_2;
 import processing.data.JSONArray;
 import processing.data.JSONObject;
-
+import processing.core.PApplet;
 /**
  * This classprovide methods for dealing with input/outputand format conversions
  */
 
 public class IO {
-	
+	/** Name of the instance */
+	public static String instance_name = null;
+    
 	/**
 	 * Load a 2D point set from a Json file
 	 * 
 	 * @param filename  name of the input file
 	 * @return  an array storing the input points
 	 */
-	public static Point_2[] loadPointSet(String filename){
+	public static Point_2[] loadPointSet(String filename) {
 		Point_2[] result=null; // the input points
 		System.out.print("Reading JSON input file: "+filename+"...");
 		JSONArray values;
 		JSONObject json;
-		
+
 		json = loadFile(filename);
 		System.out.println("ok");
 		
 		String type = json.getString("type");
 		String name = json.getString("name");
+		instance_name = name;
 		JSONArray inputPoints = json.getJSONArray("points");
 		System.out.println("\ttype: "+type);
 		System.out.println("\tname: "+name);
@@ -54,6 +59,29 @@ public class IO {
 		return result;
 	}
 
+	public static void writeEdges(Polyhedron_3<Point_2> mesh) {
+		JSONObject output = new JSONObject();
+		output.put("type", "Solution");
+		output.put("instance_name", instance_name);
+		JSONArray edges = new JSONArray();
+		output.put("edges", edges);
+		for (Halfedge he: mesh.halfedges) {
+			int a = he.vertex.index;
+			int b = he.prev.vertex.index;
+			if (a < b) {
+				JSONObject edge = new JSONObject();
+				edge.put("i", a);
+				edge.put("j", b);
+				edges.append(edge);
+			}
+		}
+		System.out.println(output);
+		System.out.println("test");
+		String outname = instance_name;
+		outname = "./outputs/".concat(outname).concat(".output.json");
+		File outfile = new File(outname);
+		output.save(outfile, "compact");
+	}
 	/**
 	 * Load a JSON object from input file
 	 * 
