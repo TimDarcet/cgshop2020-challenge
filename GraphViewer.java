@@ -323,17 +323,17 @@ public class GraphViewer extends PApplet {
 		gv.delaunay=Algorithms.computeDelaunay(pointSet);
 		gv.graph=IO.polyhedronFromTriangulation(pointSet, gv.delaunay);
 		gv.graph.resetMeshIndices();
-		//System.out.println(Algorithms.toString(this.graph)); // print the halfedges of the mesh
-		gv.delaunay=null; // erase the Delaunay triangulation (not useful anymore)
-		while (Algorithms.randomDecimation(gv.graph)) {
-			gv.n_removed++;
-			if (gv.n_removed > gv.graph.vertices.size()/10) {
-				System.out.println("Too manny nulls, cleaning...");
-				Algorithms.cleanMesh(gv.graph);
-				gv.n_removed=0;
-			}
-		}
-		Algorithms.cleanMesh(gv.graph);
+		// System.out.println(Algorithms.toString(this.graph)); // print the halfedges of the mesh
+		// gv.delaunay=null; // erase the Delaunay triangulation (not useful anymore)
+		// while (Algorithms.randomDecimation(gv.graph)) {
+		// 	gv.n_removed++;
+		// 	if (gv.n_removed > gv.graph.vertices.size()/10) {
+		// 		System.out.println("Too manny nulls, cleaning...");
+		// 		Algorithms.cleanMesh(gv.graph);
+		// 		gv.n_removed=0;
+		// 	}
+		// }
+		// Algorithms.cleanMesh(gv.graph);
 		System.out.println(IO.score(gv.graph));
 		Algorithms.cleanMesh(gv.graph);
 		IO.writeEdges(gv.graph);

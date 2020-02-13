@@ -75,8 +75,8 @@ public class IO {
 				edges.append(edge);
 			}
 		}
-		System.out.println(output);
-		System.out.println("test");
+		// System.out.println(output);
+		// System.out.println("test");
 		String outname = instance_name;
 		outname = "./outputs/".concat(outname).concat(".output.json");
 		File outfile = new File(outname);
@@ -143,6 +143,9 @@ public class IO {
 			int v0=face.vertex(0).index;
 			int v1=face.vertex(1).index;
 			int v2=face.vertex(2).index;
+			if (v0 == 534 || v1 == 534 || v2 == 534) {
+				System.out.printf("%d %d %d\n", v0, v1, v2);
+			}
 			//System.out.println("f"+counter+": "+v0+", "+v1+", "+v2);
 			
 			faces[counter][0]=v0;
