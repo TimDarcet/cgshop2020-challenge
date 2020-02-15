@@ -59,38 +59,39 @@ public class GraphViewer extends PApplet {
 			  this.updateBoundingBox(this.pointSet); // update the corners 'a' and 'b'
 	}
 	  
-	  /**
-	   * Deal with keyboard events
-	   */
-	  public void keyPressed(){
-		  switch(key) {
-		  case('d'):this.delaunay=Algorithms.computeDelaunay(pointSet); break;
-		  case('h'): {
-			  this.graph=IO.polyhedronFromTriangulation(pointSet, this.delaunay);
-			  this.graph.resetMeshIndices();
-			  //System.out.println(Algorithms.toString(this.graph)); // print the halfedges of the mesh
-			  this.delaunay=null; // erase the Delaunay triangulation (not useful anymore)
-			  break;
-		  }
-		  case('r'): {
-			  while (Algorithms.randomDecimation(this.graph)) {
-				n_removed++;
-				if (n_removed>this.graph.vertices.size()/10) {
-					System.out.println("Too manny nulls, cleaning...");
-					Algorithms.cleanMesh(this.graph);
-					n_removed=0;
-				}
-			  }
-			  Algorithms.cleanMesh(this.graph);
-			  break;
-		  }
-		  case('s'):System.out.println(IO.score(this.graph)); break;
-		  case('g'):Algorithms.cleanMesh(this.graph); break;
-		  case('w'):IO.writeEdges(graph); break;
-		  case('-'):this.zoom(1.2); break;
-		  case('+'):this.zoom(0.8); break;
-		  }
-	  }
+	/**
+	 * Deal with keyboard events
+	 */
+	public void keyPressed(){
+		  switch(key	) {
+		case('d'):this.delaunay=Algorithms.computeDelaunay(pointSet); break;
+		case('h'): {
+			this.graph=IO.polyhedronFromTriangulation(pointSet, this.delaunay);
+			this.graph.resetMeshIndices();
+			//System.out.println(Algorithms.toString(this.graph)); // print the halfedges of the mesh
+			this.delaunay=null; // erase the Delaunay triangulation (not useful anymore)
+			break;
+		}
+		case('r'): {
+			while (Algorithms.randomDecimation(this.graph)) {
+			n_removed++;
+			if (n_removed>this.graph.vertices.size()/10) {
+				System.out.println("Too manny nulls, cleaning...");
+				Algorithms.cleanMesh(this.graph);
+				n_removed=0;
+			}
+			}
+			Algorithms.cleanMesh(this.graph);
+			break;
+		}
+		case('s'):System.out.println(IO.score(this.graph)); break;
+		case('g'):Algorithms.cleanMesh(this.graph); break;
+		case('w'):IO.writeEdges(graph); break;
+		case('c'):Algorithms.convexifyBoundary(this.graph);break;
+		case('-'):this.zoom(1.2); break;
+		case('+'):this.zoom(0.8); break;
+		}
+	}
 	  
 	  public void zoom(double factor) {
 		  Point_2 barycenter=Point_2.midPoint(a, b);
@@ -133,6 +134,7 @@ public class GraphViewer extends PApplet {
 		label=label+"press 'r' for performing edge decimation\n";
 		label=label+"press 's' to display score\n";
 		label=label+"press 'w' to write to file\n";
+		label=label+"press 'c' to convexify boundary\n";
 		label=label+"use 'left mouse click' to show vertex index\n";
 		label=label+"use 'right mouse button' to drag the layout";
 		
@@ -325,15 +327,16 @@ public class GraphViewer extends PApplet {
 		gv.graph.resetMeshIndices();
 		// System.out.println(Algorithms.toString(this.graph)); // print the halfedges of the mesh
 		// gv.delaunay=null; // erase the Delaunay triangulation (not useful anymore)
-		// while (Algorithms.randomDecimation(gv.graph)) {
-		// 	gv.n_removed++;
-		// 	if (gv.n_removed > gv.graph.vertices.size()/10) {
-		// 		System.out.println("Too manny nulls, cleaning...");
-		// 		Algorithms.cleanMesh(gv.graph);
-		// 		gv.n_removed=0;
-		// 	}
-		// }
-		// Algorithms.cleanMesh(gv.graph);
+		Algorithms.convexifyBoundary(gv.graph);
+		while (Algorithms.randomDecimation(gv.graph)) {
+			gv.n_removed++;
+			if (gv.n_removed > gv.graph.vertices.size()/10) {
+				System.out.println("Too manny nulls, cleaning...");
+				Algorithms.cleanMesh(gv.graph);
+				gv.n_removed=0;
+			}
+		}
+		Algorithms.cleanMesh(gv.graph);
 		System.out.println(IO.score(gv.graph));
 		Algorithms.cleanMesh(gv.graph);
 		IO.writeEdges(gv.graph);

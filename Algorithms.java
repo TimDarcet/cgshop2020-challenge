@@ -1,10 +1,12 @@
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ThreadLocalRandom;
-
+import java.util.LinkedList;
 
 import Jcg.geometry.Point_;
 import Jcg.geometry.Point_2;
+import Jcg.geometry.kernel.ExactPredicates_2;
+import Jcg.geometry.kernel.GeometricPredicates_2;
 import Jcg.polyhedron.Face;
 import Jcg.polyhedron.Halfedge;
 import Jcg.polyhedron.Polyhedron_3;
@@ -13,6 +15,8 @@ import Jcg.triangulations2D.Delaunay_2;
 import Jcg.triangulations2D.TriangulationDSFace_2;
 
 public class Algorithms {
+
+	public static GeometricPredicates_2 predicates = new ExactPredicates_2();
 
 	/** 
 	 * Compute and return the 2D Delaunay triangulation
@@ -102,7 +106,126 @@ public class Algorithms {
 	public static boolean isConvex(Face<Point_2> face){
 		throw new Error("To be completed");
 	}
-	
+
+	/** 
+	 * Check the convexity of a corner. The corner is defined by the incident (incoming) half-edge
+	 * 
+	 * @param e  half-edge of the mesh incident to the corner
+	 */
+	public static boolean isConvex(Halfedge<Point_2> e){
+		Point_2 previous=e.getOpposite().getVertex().getPoint();
+		Point_2 p=e.getVertex().getPoint();
+		Point_2 next=e.getNext().getVertex().getPoint();
+		
+		return predicates.isCounterClockwise(previous,p,next);
+	}
+
+	/** 
+	 * Check the convexity of the mesh.
+	 * 
+	 * @param e  half-edge of the mesh incident to the corner
+	 */
+	public static boolean isConvex(Polyhedron_3<Point_2> mesh){
+		System.out.println("To be done");
+		return false;
+	}
+
+	/**
+	 * Creates a new triangle facet on the outer face, in order to remove a convex outer corner. <br>
+	 * <br>
+	 * Returns the halfedge of the new edge that is incident to the new facet. 
+	 */	        
+	private static Halfedge<Point_2> convexify(Polyhedron_3<Point_2> mesh, Halfedge<Point_2> h) {
+		if(h==null || h.face!=null) 
+			return null;
+		if(isConvex(h)==false)
+			return null;
+
+		Halfedge<Point_2> hPrev=h.getPrev();
+		Halfedge<Point_2> hNext=h.getNext();
+		Halfedge<Point_2> hNextNext=h.getNext().getNext();
+
+		Face<Point_2> newFace=new Face<Point_2>();
+		Halfedge<Point_2> eIn=new Halfedge<Point_2>();
+		Halfedge<Point_2> eOut=new Halfedge<Point_2>();
+
+		// setting the new face
+		newFace.setEdge(h);
+		// setting eIn (new inner halfedge)
+		eIn.setFace(newFace);
+		eIn.setVertex(h.getOpposite().getVertex());
+		eIn.setPrev(hNext);
+		eIn.setNext(h);
+		eIn.setOpposite(eOut);
+		// setting eOut (new outer halfedge)
+		eOut.setFace(null);
+		eOut.setVertex(hNext.getVertex());
+		eOut.setPrev(hPrev);
+		eOut.setNext(hNextNext);
+		eOut.setOpposite(eIn);
+
+		// updating old boundary halfedge informations
+		h.setFace(newFace);
+		h.setPrev(eIn);
+		hNext.setFace(newFace);
+		hNext.setNext(eIn);
+		hPrev.setNext(eOut);
+		hNextNext.setPrev(eOut);
+
+		// adding new facet, vertex and the four halfedges
+		mesh.facets.add(newFace);
+		mesh.halfedges.add(eIn);
+		mesh.halfedges.add(eOut);
+		
+		System.out.println("New convex face: v"+h.getVertex().index+", v"+h.getNext().getVertex().index+", v"+h.getPrev().getVertex().index);
+
+		mesh.resetMeshIndices(); // recompute all face and edge indices
+
+		return eOut;
+	}
+
+	/**
+	 * Creates a new triangle facet on the outer face, in order to remove a convex outer corner. <br>
+	 * <br>
+	 * Returns the halfedge of the new edge that is incident to the new facet. 
+	 */	        
+	public static void convexifyBoundary(Polyhedron_3<Point_2> mesh) {
+		if(mesh==null) return;
+		
+		int B=0; // boundary size
+		System.out.print("Convexifying boundary ");
+		LinkedList<Halfedge<Point_2>> edges=new LinkedList<Halfedge<Point_2>>();
+		for(Halfedge<Point_2> e: mesh.halfedges) {
+			if(e.getFace()==null) { // checking concavity of the outer face
+				B++;
+				boolean convex=isConvex(e);
+				if(convex==true) {
+					edges.add(e);
+				}
+			}
+		}
+		System.out.println("(boundary size: "+B+")");
+		
+		while(edges.isEmpty()==false) {
+			Halfedge<Point_2> e=edges.pollFirst();
+			
+			if(e!=null && e.getFace()==null) { // checking concavity of the outer face
+				boolean convex=isConvex(e);
+				if(convex==true) {
+					System.out.println("\tOuter corner at v"+e.getVertex().index+" convex"); 
+					Halfedge<Point_2> result=convexify(mesh, e);
+					if(result!=null) {
+						edges.add(result);
+						edges.add(result.getPrev());
+					}
+				}
+			}
+		}
+		System.out.println("Convexification done");
+		
+		mesh.isValid(true);
+	}
+
 	/** 
 	 * Remove one edge (and its opposite halfedge) from the mesh. The two incident faces are merged. <br>
 	 * 
