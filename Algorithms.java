@@ -53,9 +53,9 @@ public class Algorithms {
 		Halfedge<Point_2> he = mesh.halfedges.get(randidx);
 		int i=0;
 		while (i < mesh.halfedges.size() && (he == null || !checkRemoval(mesh, he))) {
+			System.out.println("Invalid, retrying...");
 			randidx = ThreadLocalRandom.current().nextInt(0, mesh.halfedges.size());
 			he = mesh.halfedges.get(randidx);
-			System.out.println("Invalid, retrying...");
 			i++;
 		}
 		if (i >= mesh.halfedges.size()) {
